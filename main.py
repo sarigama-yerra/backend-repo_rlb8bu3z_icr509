@@ -1,6 +1,10 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Any, Dict
+
+from schemas import ContactMessage
+from database import create_document
 
 app = FastAPI()
 
@@ -19,6 +23,15 @@ def read_root():
 @app.get("/api/hello")
 def hello():
     return {"message": "Hello from the backend API!"}
+
+@app.post("/api/contact")
+def submit_contact(payload: ContactMessage) -> Dict[str, Any]:
+    """Accept contact form submissions and persist them to the database."""
+    try:
+        inserted_id = create_document("contactmessage", payload)
+        return {"status": "success", "id": inserted_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save message: {str(e)}")
 
 @app.get("/test")
 def test_database():
